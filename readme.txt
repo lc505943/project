@@ -72,7 +72,7 @@
 	v session_path : view player session (assignment, moves, final board)
 	e : exit taskmaster interface
 
-# the "load" command we care about is the one we care about;
+# the "load" command is the one we care about;
 # lets load boards captured in file "board1.png", "board_almost_solved.png"
 
 	stoner>taskmaster>>>l board1.png assignment1
@@ -126,48 +126,11 @@
 # play the session
 
 	stoner>player>>>p session1
-	1 3 5 2 4 4 3 1 1 3 5 4 2 3 3 1 4 5 3 2 
-	1 4 4 4 1 2 4 2 3 4 5 4 4 2 5 3 4 3 3 4 
-	3 1 1 2 1 5 2 1 3 4 1 2 2 1 1 1 5 3 2 1 
-	4 2 5 1 4 1 5 1 1 1 1 5 2 4 4 1 3 5 5 5 
-	4 5 4 2 5 2 4 4 1 1 1 5 3 2 4 3 3 4 1 2 
-	2 3 4 3 3 4 5 1 1 1 1 2 3 5 2 4 4 5 2 1 
-	5 1 5 2 1 4 5 1 1 2 1 3 1 3 1 5 1 1 1 4 
-	1 2 1 1 3 1 3 1 3 4 1 3 1 2 1 2 1 2 4 4 
-	2 1 5 1 4 3 2 2 1 3 1 1 2 3 1 3 4 1 4 1 
-	1 4 1 1 2 1 3 3 5 2 1 1 1 5 5 5 3 5 1 4 
-	playing session>>>h
-	commands:
-	intCOORD_SEPint : click this tile
-	z : undo
-	y : redo
-	a verbose : auto-solve; verbose: True | False
-	s : save & exit
-	h : help
-	1 3 5 2 4 4 3 1 1 3 5 4 2 3 3 1 4 5 3 2 
-	1 4 4 4 1 2 4 2 3 4 5 4 4 2 5 3 4 3 3 4 
-	3 1 1 2 1 5 2 1 3 4 1 2 2 1 1 1 5 3 2 1 
-	4 2 5 1 4 1 5 1 1 1 1 5 2 4 4 1 3 5 5 5 
-	4 5 4 2 5 2 4 4 1 1 1 5 3 2 4 3 3 4 1 2 
-	2 3 4 3 3 4 5 1 1 1 1 2 3 5 2 4 4 5 2 1 
-	5 1 5 2 1 4 5 1 1 2 1 3 1 3 1 5 1 1 1 4 
-	1 2 1 1 3 1 3 1 3 4 1 3 1 2 1 2 1 2 4 4 
-	2 1 5 1 4 3 2 2 1 3 1 1 2 3 1 3 4 1 4 1 
-	1 4 1 1 2 1 3 3 5 2 1 1 1 5 5 5 3 5 1 4 
-	playing session>>>2;0
-	requested move: (2, 0)
-	played move 2;0
-	1 3     4 4 3 1 1 3 5 4 2 3 3 1 4 5 3 2 
-	1 4     1 2 4 2 3 4 5 4 4 2 5 3 4 3 3 4 
-	3 1 5   1 5 2 1 3 4 1 2 2 1 1 1 5 3 2 1 
-	4 2 4 2 4 1 5 1 1 1 1 5 2 4 4 1 3 5 5 5 
-	4 5 1 4 5 2 4 4 1 1 1 5 3 2 4 3 3 4 1 2 
-	2 3 5 2 3 4 5 1 1 1 1 2 3 5 2 4 4 5 2 1 
-	5 1 4 1 1 4 5 1 1 2 1 3 1 3 1 5 1 1 1 4 
-	1 2 4 2 3 1 3 1 3 4 1 3 1 2 1 2 1 2 4 4 
-	2 1 5 3 4 3 2 2 1 3 1 1 2 3 1 3 4 1 4 1 
-	1 4 5 2 2 1 3 3 5 2 1 1 1 5 5 5 3 5 1 4 
-	playing session>>>s
+	
+	# this is where the changes are;
+	# GUI should appear - play with it!
+	# closing the window saves the progress
+	
 	successfully played a session at: session1
 
 # since this is the core of the whole app, i encourage you to play with it!
@@ -176,6 +139,8 @@
 
 # now lets try the auto-solve feature;
 # sadly, it is only useful on "small inputs"
+# also, interacting with the GUI while auto-solve is running crashes the app
+# this part needs a bit of polishing
 
 	stoner>player>>>c assignment_almost_solved session_almost_solved
 	success! session available at: session_almost_solved
