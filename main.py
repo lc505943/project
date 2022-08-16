@@ -1,5 +1,10 @@
 from typing import List, Tuple, Optional
+
+import PySide2.QtWidgets
 from PIL import Image
+
+from PySide2.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox
+import sys
 
 # Kamenožrout available at https://is.muni.cz/auth/hry/01/
 
@@ -15,13 +20,14 @@ NAVY: Fill = 3
 TEAL: Fill = 4
 SKY: Fill = 5
 
-EMPTY_RGB: Tuple[int, int, int]
+EMPTY_RGB: Tuple[int, int, int] = (255, 255, 255)
 PURPLE_RGB: Tuple[int, int, int] = (219, 32, 255)
 MAGENTA_RGB: Tuple[int, int, int] = (255, 19, 104)
 NAVY_RGB: Tuple[int, int, int] = (0, 0, 128)
 TEAL_RGB: Tuple[int, int, int] = (8, 201, 255)
 SKY_RGB: Tuple[int, int, int] = (81, 81, 251)
-# todo might want to add EMPTY_RGB
+
+FILLS_RGB: List[Tuple[int, int, int]] = [EMPTY_RGB, PURPLE_RGB, MAGENTA_RGB, NAVY_RGB, TEAL_RGB, SKY_RGB]
 
 Matrix = List[List[Fill]]  # represents the grid of stones itself
 
@@ -344,6 +350,31 @@ class Board:
         return False  # no solution of this board
 
 
+def rgb_to_fill(rgb_color: Tuple[int, int, int]) -> Fill:
+    """
+    converts rgb code to the Fill representation
+    :param rgb_color:
+    :return: fill
+    """
+
+    fill: Fill
+
+    if rgb_color == PURPLE_RGB:
+        fill = PURPLE
+    elif rgb_color == MAGENTA_RGB:
+        fill = MAGENTA
+    elif rgb_color == NAVY_RGB:
+        fill = NAVY
+    elif rgb_color == TEAL_RGB:
+        fill = TEAL
+    elif rgb_color == SKY_RGB:
+        fill = SKY
+    else:
+        fill = EMPTY
+
+    return fill
+
+
 def pic_processor(path: str) -> Optional[str]:
     """
     loads board from its picture located at path
@@ -373,24 +404,7 @@ def pic_processor(path: str) -> Optional[str]:
 
     for x_coord in x_coords:
         for y_coord in y_coords:
-            color = pic.getpixel((x_coord, y_coord))
-
-            actual_fill: Fill
-
-            if color == PURPLE_RGB:
-                actual_fill = PURPLE
-            elif color == MAGENTA_RGB:
-                actual_fill = MAGENTA
-            elif color == NAVY_RGB:
-                actual_fill = NAVY
-            elif color == TEAL_RGB:
-                actual_fill = TEAL
-            elif color == SKY_RGB:
-                actual_fill = SKY
-            else:
-                actual_fill = EMPTY  # todo might be worth checking it matches empty tile
-
-            result.append(actual_fill)
+            result.append(rgb_to_fill(pic.getpixel((x_coord, y_coord))))
 
     return "".join([str(fill) for fill in result])
 
@@ -468,7 +482,7 @@ class Session:
 
     def undo(self) -> int:
         """
-        undoes the last move if theres a move do undo else fails
+        undoes the last move if there is a move do undo else fails
         :return: 0 if success else -1
         """
 
@@ -486,7 +500,7 @@ class Session:
 
     def redo(self) -> int:
         """
-        redoes the last undo if theres a move to redo else fails
+        redoes the last undo if there is a move to redo else fails
         :return: 0 if success else -1
         """
 
@@ -505,7 +519,7 @@ class Session:
     def load(self, string_repre: str) -> int:
         """
         load session from its string representation
-        :param string_repre: strign representation of the session
+        :param string_repre: string representation of the session
         :return: 0 on success else -1
         """
 
@@ -561,69 +575,6 @@ class Session:
         return res
 
 
-def play_session(session: Session) -> str:
-    """
-    play given session
-
-    commands:
-    intCOORD_SEPint : click this tile
-    z : undo
-    y : redo
-    a verbose : auto-solve; verbose: True | False
-    s : save & exit
-    h : help
-
-    :param session: Session to be played
-    :return: the string representation of the session to be saved
-    """
-
-    while True:
-        print_board(session.current_board)
-
-        inp: str = input(SESSION_PROMPT)
-
-        if inp == "z":
-            print("undo success" if session.undo() == 0 else "undo fail")
-            continue
-
-        if inp == "y":
-            print("redo success" if session.redo() == 0 else "redo fail")
-            continue
-
-        if inp == "a True" or inp == "a False":
-            solution: List[Coord] = []
-
-            # todo theres something weird going on in Board.solve() ->
-            # todo for now lets use it on a copy in order to not mess up session
-            aux_board: Board = Board()
-            aux_board.matrix = session.current_board.duplicate_matrix()
-
-            if aux_board.solve(inp == "a True", solution):
-                print(f"solution found! {solution}")
-            else:
-                print("no solution for this board :(")
-
-            continue
-
-        if inp == "s":
-            return session.to_string()
-
-        if inp == "h":
-            print(PLAY_SESSION_HELP)
-            continue
-
-        move: Optional[Coord] = str_to_coord(inp)
-        if move is None:
-            print("unrecognised command; try again")
-            continue
-
-        print(f"requested move: {move}")
-        if session.request_click(move) != 0:
-            print("invalid coordinates; try again")
-        else:
-            print(f"played move {move[0]};{move[1]}")
-
-
 def session_from_file(path: str) -> Optional[Session]:
     """
     load session from path
@@ -654,7 +605,7 @@ def play_session_from_file(path: str) -> int:
     if session is None:  # loaded invalid representation of a session
         return -1
 
-    session_result: str = play_session(session)
+    session_result: str = gui_play_session(session)
     with open(path, 'w') as target:
         target.write(session_result)
 
@@ -1214,6 +1165,150 @@ def main_menu() -> None:
             print("invalid input")
 
 
+QSESSION_TITLE: str = "session"
+QHELP_TITLE: str = "help window"
+HELP_TEXT: str = "help text"
+
+BUTTON_WIDTH: int = 20
+BUTTON_HEIGHT: int = 20
+
+
+class QTile(QPushButton):
+    def __init__(self, parent: 'QSession', x: int, y: int):  # todo maybe parent: QSession ? yes
+        super().__init__(parent=parent)
+        self.x: int = x
+        self.y: int = y
+        self.qs_parent: QSession = parent  # much like self.parent(), but typed
+
+        x_pos: int = x * BUTTON_WIDTH
+        y_pos: int = ((HEIGHT - 1) - y) * BUTTON_HEIGHT
+        self.setGeometry(x_pos, y_pos, BUTTON_WIDTH, BUTTON_HEIGHT)
+
+        self.clicked.connect(self.calluser)
+
+    def calluser(self) -> None:
+        """
+        the function called when this button clicked
+        :return: None
+        """
+        self.clicked_this_tile()
+
+    def clicked_this_tile(self) -> None:
+        if self.qs_parent.session.request_click((self.x, self.y)) == -1:
+            return  # invalid move; nothing changes
+
+        self.qs_parent.update_colors()
+
+
+class QSession(QWidget):
+    def __init__(self, session: Session):
+        super().__init__()
+        self.session: Session = session
+        self.button_board: List[List[QTile]] = []
+
+        self.setWindowTitle(QSESSION_TITLE)
+
+        for x in range(WIDTH):
+            col: List[QTile] = []
+
+            for y in range(HEIGHT):
+                col.append(QTile(self, x, y))
+
+            self.button_board.append(col)
+
+        self.update_colors()
+
+        self.ctrlz: QPushButton = QPushButton(parent=self)
+        self.ctrlz.setText("z")
+        self.ctrlz.setGeometry((WIDTH // 2 - 2) * BUTTON_WIDTH, (HEIGHT + 1) * BUTTON_HEIGHT, 2 * BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.ctrlz.clicked.connect(self.undo)
+
+        self.ctrly: QPushButton = QPushButton(parent=self)
+        self.ctrly.setText("y")
+        self.ctrly.setGeometry((WIDTH // 2) * BUTTON_WIDTH, (HEIGHT + 1) * BUTTON_HEIGHT, 2 * BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.ctrly.clicked.connect(self.redo)
+
+        self.help: QPushButton = QPushButton(parent=self)
+        self.help.setText("i")
+        self.help.setGeometry((WIDTH + 1) * BUTTON_WIDTH, 0, BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.help.clicked.connect(self.show_help)
+
+        self.auto: QPushButton = QPushButton(parent=self)
+        self.auto.setText("auto")
+        self.auto.setGeometry((WIDTH + 1) * BUTTON_WIDTH, (HEIGHT + 1) + BUTTON_HEIGHT, BUTTON_WIDTH, BUTTON_HEIGHT)
+        self.auto.clicked.connect(self.ai_solve)
+
+    def update_colors(self) -> None:
+        for x in range(WIDTH):
+            for y in range(HEIGHT):
+                fill: Fill = self.session.current_board.get_fill((x, y))
+                self.button_board[x][y].setStyleSheet(f"background-color:rgb{FILLS_RGB[fill]}")
+
+    def show_help(self) -> None:
+        """
+        shows help QMessageBox
+        :return: None
+        """
+        message_box: QMessageBox = QMessageBox()
+        message_box.setWindowTitle(QHELP_TITLE)
+        message_box.setText(HELP_TEXT)
+
+        _: int = message_box.exec_()  # show the window
+
+    def undo(self) -> None:
+        """
+        QPushButton.clicked.connect() does not like fction of another obj as an arg
+        lets use this instead
+        (ie this is similar to self.undo.clicked.connect(self.session.undo()))
+        :return: None
+        """
+        if self.session.undo() == -1:
+            return  # no moves to undo
+
+        self.update_colors()
+
+    def redo(self) -> None:
+        """
+        QPushButton.clicked.connect() does not like fction of another obj as an arg
+        lets use this instead
+        (ie this is similar to self.redo.clicked.connect(self.session.redo()))
+        :return: None
+        """
+        if self.session.redo() == -1:
+            return
+
+        self.update_colors()
+
+    def ai_solve(self) -> None:
+        solution: List[Coord] = []
+
+        # todo ai does weird stuff with the board, lets apply it to a new one
+        aux_board: Board = Board()
+        aux_board.matrix = self.session.current_board.duplicate_matrix()
+
+        if aux_board.solve(True, solution):
+            print(f"solution found! {solution}")
+        else:
+            print("no solution for this board :(")
+
+
+def gui_play_session(session: Session) -> str:
+    """
+    gui for interacting with the session
+    :param session: session to be interacted with
+    :return: string representation of the resulting session
+    """
+
+    # todo implement gui for other menus -> move app instance higher
+    # QApplication singleton -> this mess necessary unless QApp instance moved higher
+    app: QApplication = QApplication.instance()\
+        if QApplication.instance() else QApplication(sys.argv)
+    qsession: QSession = QSession(session)
+    qsession.show()
+    app.exec_()
+
+    return session.to_string()
+
+
 if __name__ == '__main__':
     main_menu()
-
