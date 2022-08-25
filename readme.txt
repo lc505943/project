@@ -1,5 +1,10 @@
 # Kamenožrout game available at https://is.muni.cz/auth/hry/01/
 
+# update:
+# rn, implementing the rest of GUI (part still available, follow steps below)
+#	and working on structuring the project a bit better
+# studying PostgreSQL, hopefully to be used here soon
+
 # note that the code might differ from the requirements in the other files;
 # 	this app went through some changes after the initial submition
 
